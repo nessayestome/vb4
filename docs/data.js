@@ -1,1 +1,1 @@
-const VB4_DATA={"books":[],"media":[],"notes":[]};
+const VB4_DATA={"books":[{"id":"b1785834828940","type":"book","dateAdded":"2026-08-04","title":"2181序曲","author":"顾适","coverLabel":"21","rating":5,"shortReview":"无","tags":["文学"],"reflection":"含女量极其让人舒适，最喜欢的是再版序言那篇母女故事，简直是科幻版的《好东西》，看完全书已确诊剩人：“我们坚守在属于人类的残破战壕里，并会一直坚守下去。”"}],"media":[],"notes":[]};
