@@ -4,7 +4,8 @@
   "description": "VeniceB1tch4ever personal archive",
   "private": true,
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "node -e \"const d=require('./data.json');const f=require('fs');f.writeFileSync('docs/data.js','const VB4_DATA='+JSON.stringify(d)+';');\""
   },
   "dependencies": {
     "express": "^4.21.0"

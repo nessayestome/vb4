@@ -832,6 +832,7 @@ function toggleMusic(){if(music.paused){music.play();musicBtn.style.opacity='1';
 music.onplay=function(){musicBtn.style.opacity='1';};music.onpause=function(){musicBtn.style.opacity='0.5';};
 </script>
 
+<script src="data.js"></script>
 <script>
 let BOOKS = [];
 let MEDIA = [];
@@ -867,7 +868,12 @@ fetch('/api/data')
     initWelcome();
   })
   .catch(function(err){
-    console.error('Failed to load data:', err);
+    console.log('API unavailable, loading static data:', err.message);
+    if (typeof VB4_DATA !== 'undefined') {
+      if (VB4_DATA.books) BOOKS = VB4_DATA.books;
+      if (VB4_DATA.media) MEDIA = VB4_DATA.media;
+      if (VB4_DATA.notes) NOTES = VB4_DATA.notes;
+    }
     initWelcome();
   });
 function saveData(){
