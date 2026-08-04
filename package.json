@@ -1,0 +1,12 @@
+{
+  "name": "vb4",
+  "version": "1.0.0",
+  "description": "VeniceB1tch4ever personal archive",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  }
+}

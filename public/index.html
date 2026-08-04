@@ -817,8 +817,8 @@ document.getElementById('pwInput').addEventListener('keydown',function(e){
 
     <div id="editFormManage" class="edit-form">
       <div id="manageList" style="max-height:40vh;overflow-y:auto;"></div>
-      <button onclick="exportData()" style="margin-top:12px;font-family:var(--font-display);font-style:italic;padding:10px;background:var(--ink);color:#fff;border:none;border-radius:var(--r-pill);cursor:pointer;font-size:13px;width:100%">Download data.js</button>
-      <p style="font-size:10px;color:var(--ink-lt);text-align:center;margin-top:6px;font-style:italic">Download &amp; replace data.js in your repo with GitHub Desktop</p>
+      <button onclick="exportData()" style="margin-top:12px;font-family:var(--font-display);font-style:italic;padding:10px;background:var(--ink);color:#fff;border:none;border-radius:var(--r-pill);cursor:pointer;font-size:13px;width:100%">Download data.json</button>
+      <p style="font-size:10px;color:var(--ink-lt);text-align:center;margin-top:6px;font-style:italic">Download &amp; backup data.json</p>
     </div>
   </div>
 </div>
@@ -832,8 +832,10 @@ function toggleMusic(){if(music.paused){music.play();musicBtn.style.opacity='1';
 music.onplay=function(){musicBtn.style.opacity='1';};music.onpause=function(){musicBtn.style.opacity='0.5';};
 </script>
 
-<script src="data.js?v=2"></script>
 <script>
+let BOOKS = [];
+let MEDIA = [];
+let NOTES = [];
 function starsHTML(r){var h='',f=Math.floor(r),hf=r%1>=0.5,e=5-f-(hf?1:0),i;for(i=0;i<f;i++)h+='<span class="sf">&#9733;</span>';if(hf)h+='<span class="sh">&#9733;</span>';for(i=0;i<e;i++)h+='<span class="se">&#9733;</span>';return h;}
 function cardHTML(it){var sub=it.author||it.director,cls=it.type==='tv'?' tv':'',bd=it.type==='book'?'Book':it.type==='movie'?'Film':'Series',coverStyle=it.cover?' style=\"background-image:url('+it.cover+');background-size:cover;background-position:center\"':'',labelStyle=it.cover?' style=\"display:none\"':'';return '<div class="card" onclick="openDetail(\''+it.id+'\')"><div class="card-cover"'+coverStyle+'><span class="cover-label"'+labelStyle+'>'+(it.coverLabel||it.title.substring(0,2))+'</span><span class="card-ribbon'+cls+'">'+bd+'</span></div><div class="card-body"><h3 class="card-title">'+it.title+'</h3><p class="card-sub">'+sub+'</p><div class="stars">'+starsHTML(it.rating)+'</div><div class="card-tags">'+it.tags.slice(0,3).map(function(t){return '<span class="card-tag">'+t+'</span>';}).join('')+'</div><p class="card-review">'+it.shortReview+'</p></div></div>';}
 function openDetail(id){var it=BOOKS.concat(MEDIA).find(function(i){return i.id===id;});if(!it)return;var sub=it.author?'Author: '+it.author:(it.type==='movie'?'Director: ':'Studio: ')+it.director,rf=it.type==='book'?'Reflection':'Reflection',xt=it.excerpt?'<div class="modal-section"><h4>&#x2766; Excerpt</h4><p class="modal-quote">'+it.excerpt+'</p></div>':'',hl=it.highlightScene?'<div class="modal-section"><h4>&#x2766; Iconic Scene</h4><p>'+it.highlightScene+'</p></div>':'',coverHTML=it.cover?'<div class="modal-cover" style=\"background-image:url('+it.cover+');background-size:cover;background-position:center\"></div>':'<div class="modal-cover"><span class="modal-cover-label">'+(it.coverLabel||it.title.substring(0,2))+'</span></div>';document.getElementById('modal').innerHTML='<button class="modal-close" onclick="closeModal()">&times;</button>'+coverHTML+'<h2 class="modal-title">'+it.title+'</h2><p class="modal-sub">'+sub+'</p><div class="stars">'+starsHTML(it.rating)+'</div><div class="card-tags" style="margin-top:5px;">'+it.tags.map(function(t){return '<span class="card-tag">'+t+'</span>';}).join('')+'</div><div class="modal-section"><h4>&#x2766; Review</h4><p>'+it.shortReview+'</p></div><div class="modal-section"><h4>&#x2766; '+rf+'</h4><p>'+it.reflection+'</p></div>'+hl+xt+'<p class="modal-date">Added '+it.dateAdded+'</p>';document.getElementById('modalOverlay').classList.add('open');}
@@ -856,8 +858,25 @@ var noteImgSrc='note-bg.png',noteRatio=1.78,lineImgSrc='lines.png';(function(){v
 var bowSrc='bow.png',wingSrc='deco-wings.png';(function(){var img=new Image();img.onload=function(){var c=document.createElement('canvas');c.width=img.width;c.height=img.height;var ctx=c.getContext('2d');ctx.drawImage(img,0,0);var d=ctx.getImageData(0,0,c.width,c.height).data,i,b;for(i=0;i<d.length;i+=4){b=(d[i]+d[i+1]+d[i+2])/3;if(b>220)d[i+3]=0;}ctx.putImageData(new ImageData(d,c.width,c.height),0,0);bowSrc=c.toDataURL('image/png');var bowImgs=document.querySelectorAll('.header-bow');for(i=0;i<bowImgs.length;i++)bowImgs[i].src=bowSrc;};img.src='bow.png';})();
 // Edit Panel Logic
 var editUnlocked=false;
-(function(){var saved=localStorage.getItem('vb4_data');if(saved){try{var d=JSON.parse(saved);if(d.books&&d.books.length)BOOKS=d.books;if(d.media&&d.media.length)MEDIA=d.media;if(d.notes&&d.notes.length)NOTES=d.notes;}catch(e){}}})();
-function saveData(){localStorage.setItem('vb4_data',JSON.stringify({books:BOOKS,media:MEDIA,notes:NOTES}));}
+fetch('/api/data')
+  .then(function(res){ return res.json(); })
+  .then(function(data){
+    if(data.books) BOOKS = data.books;
+    if(data.media) MEDIA = data.media;
+    if(data.notes) NOTES = data.notes;
+    initWelcome();
+  })
+  .catch(function(err){
+    console.error('Failed to load data:', err);
+    initWelcome();
+  });
+function saveData(){
+  fetch('/api/data', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({books:BOOKS, media:MEDIA, notes:NOTES})
+  }).catch(function(err){ console.error('Save failed:', err); });
+}
 function openEdit(){
   if(!editUnlocked){var pw=prompt('Password:');if(pw!=='20010226myangelvb4'){alert('Wrong password');return;}editUnlocked=true;}
   document.getElementById('editOverlay').classList.add('open');
@@ -871,15 +890,22 @@ function addBook(e){e.preventDefault();var f=e.target;var ei=f.dataset.editIndex
 function addMedia(e){e.preventDefault();var f=e.target;var ei=f.dataset.editIndex;var done=function(cover){var m=ei?MEDIA[ei]:{id:'m'+Date.now(),type:f.type.value,dateAdded:new Date().toISOString().split('T')[0]};m.type=f.type.value;m.title=f.title.value;m.director=f.director.value;m.coverLabel=f.title.value.substring(0,2).toUpperCase();m.rating=parseFloat(f.rating.value);m.shortReview=f.shortReview.value;m.tags=f.tags.value.split(',').map(function(t){return t.trim();}).filter(Boolean);m.reflection=f.reflection.value;if(f.highlightScene.value)m.highlightScene=f.highlightScene.value;else delete m.highlightScene;if(cover)m.cover=cover;if(!ei)MEDIA.unshift(m);saveData();closeEdit();f.reset();f.querySelector('button').textContent='Add to Cinema';delete f.dataset.editIndex;switchPage('home');};if(f.cover.files[0]){readCover(f.cover.files[0],done);}else{done();}}
 function addNote(e){e.preventDefault();var f=e.target;var ei=f.dataset.editIndex;if(ei){NOTES[ei].content=f.content.value;}else{NOTES.unshift({id:'n'+Date.now(),content:f.content.value,color:Math.floor(Math.random()*6),rotation:(Math.random()*6-3)});}saveData();closeEdit();f.reset();f.querySelector('button').textContent='Add Note';delete f.dataset.editIndex;switchPage('era404');}
 function renderManage(){var h='';BOOKS.forEach(function(b,i){h+='<div class="manage-item"><span>Book: '+b.title+'</span><button onclick="editBook('+i+')">Edit</button><button onclick="delBook('+i+')" class="del-btn">Del</button></div>';});MEDIA.forEach(function(m,i){h+='<div class="manage-item"><span>'+(m.type==='movie'?'Film':'Series')+': '+m.title+'</span><button onclick="editMedia('+i+')">Edit</button><button onclick="delMedia('+i+')" class="del-btn">Del</button></div>';});NOTES.forEach(function(n,i){h+='<div class="manage-item"><span>Note: '+n.content.substring(0,30)+'...</span><button onclick="editNote('+i+')">Edit</button><button onclick="delNote('+i+')" class="del-btn">Del</button></div>';});document.getElementById('manageList').innerHTML=h||'<p style="font-style:italic;color:var(--ink-lt)">No entries yet.</p>';}
-function refreshActive(){var p=document.querySelector('.page.active');if(!p)return;var id=p.id;if(id==='page-home')initWelcome();if(id==='page-bookshelf')renderBooks('');if(id==='page-couch')renderCouch('');if(id==='page-dashboard')renderDashboard();if(id==='page-era404')renderNotes('');}
+function refreshActive(){var p=document.querySelector('.page.active');if(!p)return;var id=p.id;if(id==='page-home')initWelcome();if(id==='page-bookshelf')renderBooks('');if(id==='page-couch')renderCoach('');if(id==='page-dashboard')renderDashboard();if(id==='page-era404')renderNotes('');}
 function delBook(i){if(confirm('Delete "'+BOOKS[i].title+'"?')){BOOKS.splice(i,1);saveData();renderManage();refreshActive();}}
 function delMedia(i){if(confirm('Delete "'+MEDIA[i].title+'"?')){MEDIA.splice(i,1);saveData();renderManage();refreshActive();}}
 function delNote(i){if(confirm('Delete this note?')){NOTES.splice(i,1);saveData();renderManage();refreshActive();}}
-function exportData(){var content='const BOOKS = '+JSON.stringify(BOOKS,null,2)+';\n\nconst MEDIA = '+JSON.stringify(MEDIA,null,2)+';\n\nconst NOTES = '+JSON.stringify(NOTES,null,2)+';\n';var blob=new Blob([content],{type:'text/javascript'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='data.js';a.click();}
+function exportData(){
+  var data = JSON.stringify({books:BOOKS, media:MEDIA, notes:NOTES}, null, 2);
+  var blob = new Blob([data], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'data.json';
+  a.click();
+}
 function editBook(i){var b=BOOKS[i];var f=document.getElementById('editFormBook');f.title.value=b.title;f.author.value=b.author;f.rating.value=b.rating;f.shortReview.value=b.shortReview;f.tags.value=b.tags.join(', ');f.reflection.value=b.reflection||'';f.excerpt.value=b.excerpt||'';f.dataset.editIndex=i;f.querySelector('button').textContent='Save Changes';document.querySelector('.edit-tab[data-etab="book"]').click();}
 function editMedia(i){var m=MEDIA[i];var f=document.getElementById('editFormMedia');f.type.value=m.type;f.title.value=m.title;f.director.value=m.director;f.rating.value=m.rating;f.shortReview.value=m.shortReview;f.tags.value=m.tags.join(', ');f.reflection.value=m.reflection||'';f.highlightScene.value=m.highlightScene||'';f.dataset.editIndex=i;f.querySelector('button').textContent='Save Changes';document.querySelector('.edit-tab[data-etab="media"]').click();}
 function editNote(i){var n=NOTES[i];var f=document.getElementById('editFormNote');f.content.value=n.content;f.dataset.editIndex=i;f.querySelector('button').textContent='Save Changes';document.querySelector('.edit-tab[data-etab="note"]').click();}
-initWelcome();
+
 </script>
 </body>
 </html>
